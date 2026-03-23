@@ -1,0 +1,15 @@
+bundle:
+  name: gitea-behavior
+  version: 0.1.0
+  description: Adds ephemeral Gitea Docker environment capability via the amplifier-gitea CLI
+
+tools:
+  - module: tool-skills
+    source: git+https://github.com/microsoft/amplifier-module-tool-skills@main
+    config:
+      skills:
+        - "git+https://github.com/microsoft/amplifier-bundle-gitea@main#subdirectory=skills"
+
+context:
+  include:
+    - gitea:context/gitea-awareness.md
