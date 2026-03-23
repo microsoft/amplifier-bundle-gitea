@@ -104,7 +104,19 @@ All commands return JSON to stdout. See [docs/api_reference.md](docs/api_referen
 
 ## Amplifier Bundle
 
-TBD. Skills and context for Amplifier integration will be added later.
+This repo is also an Amplifier bundle. The bundle provides a `gitea` skill and context awareness so the AI model knows how to use the `amplifier-gitea` CLI.
+
+**Standalone (includes foundation):**
+```bash
+amplifier bundle add git+https://github.com/microsoft/amplifier-bundle-gitea@main --app
+```
+
+**As a behavior (compose into existing bundle):**
+```bash
+amplifier bundle add "git+https://github.com/microsoft/amplifier-bundle-gitea@main#subdirectory=behaviors/gitea.yaml"
+```
+
+The CLI must be installed separately (see Install above). The bundle does not auto-install it.
 
 
 ## Development
