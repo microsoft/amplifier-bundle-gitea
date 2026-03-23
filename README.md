@@ -25,11 +25,27 @@ See [docs/api_reference.md](docs/api_reference.md) for the full API.
 - [uv](https://docs.astral.sh/uv/) (package manager and runner)
 - [Docker Engine](https://docs.docker.com/engine/install/) (container runtime)
 
-### Install
+### CLI
 
 ```bash
 uv tool install git+https://github.com/microsoft/amplifier-bundle-gitea@main
 ```
+
+### Amplifier Bundle
+
+This repo is also an Amplifier bundle. The bundle provides a `gitea` skill and context awareness so the AI model knows how to use the `amplifier-gitea` CLI. The CLI must be installed separately (see above).
+
+For interactive Amplifier sessions, install as an app bundle (recommended):
+```bash
+amplifier bundle add git+https://github.com/microsoft/amplifier-bundle-gitea@main --app
+```
+
+To compose into an existing bundle:
+```bash
+amplifier bundle add "git+https://github.com/microsoft/amplifier-bundle-gitea@main#subdirectory=behaviors/gitea.yaml"
+```
+
+Otherwise, consider using the CLI directly.
 
 For development setup, see [docs/development.md](docs/development.md).
 
@@ -100,23 +116,6 @@ amplifier-gitea promote-to-github <id> \
 ```
 
 All commands return JSON to stdout. See [docs/api_reference.md](docs/api_reference.md) for the full API.
-
-
-## Amplifier Bundle
-
-This repo is also an Amplifier bundle. The bundle provides a `gitea` skill and context awareness so the AI model knows how to use the `amplifier-gitea` CLI.
-
-**Standalone (includes foundation):**
-```bash
-amplifier bundle add git+https://github.com/microsoft/amplifier-bundle-gitea@main --app
-```
-
-**As a behavior (compose into existing bundle):**
-```bash
-amplifier bundle add "git+https://github.com/microsoft/amplifier-bundle-gitea@main#subdirectory=behaviors/gitea.yaml"
-```
-
-The CLI must be installed separately (see Install above). The bundle does not auto-install it.
 
 
 ## Development
