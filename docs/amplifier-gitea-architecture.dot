@@ -1,0 +1,57 @@
+digraph gitea_integration {
+    rankdir=TB
+    label="CLI: amplifier-gitea"
+    labelloc=t
+    fontname="Helvetica"
+    fontsize=14
+    node [shape=box, style="rounded,filled", fillcolor="#e8f0fe", fontname="Helvetica"]
+    edge [fontname="Helvetica", fontsize=10]
+
+    subgraph cluster_local {
+        label="CLI runs on consumer's machine"
+        style="rounded,dashed"
+        color="#666666"
+        fontname="Helvetica"
+        fontsize=11
+
+        consumer [label="Consumer"]
+        gitea [label="Gitea\n(container)"]
+        github [label="GitHub", shape=cylinder, fillcolor="#f5f5f5"]
+
+        // Meta: lifecycle management (this package)
+        consumer -> gitea [label="create / destroy", style=dashed]
+
+        // Git: standard operations Gitea provides as a GitHub replacement
+        consumer -> gitea [label="clone, push, PR,\nissues, branches, ..."]
+
+        // GitHub sync: consumer-initiated, flows through Gitea
+        consumer -> gitea [label="mirror-from-github /\npromote-to-github", color="#2d7d46", fontcolor="#2d7d46"]
+        gitea -> github [label="mirror-from-github /\npromote-to-github", color="#2d7d46", fontcolor="#2d7d46"]
+
+        // Invisible spacer to push legend to the right
+        spacer [style=invis, width=1.5, height=0, label=""]
+        { rank=same; gitea; spacer }
+        gitea -> spacer [style=invis, minlen=1]
+
+        // Legend
+        subgraph cluster_legend {
+            label="Legend"
+            style="rounded"
+            color="#999999"
+            fontname="Helvetica"
+            fontsize=9
+            margin="4"
+            node [shape=plaintext, fillcolor=transparent, fontsize=8]
+
+            leg [label=<
+                <table border="0" cellspacing="2" cellpadding="1">
+                    <tr><td align="left"><font color="black">&#x2500;&#x2500;&#x25B6;</font></td><td align="left">Git platform ops</td></tr>
+                    <tr><td align="left"><font color="black">- - &#x25B6;</font></td><td align="left">Lifecycle</td></tr>
+                    <tr><td align="left"><font color="#2d7d46">&#x2500;&#x2500;&#x25B6;</font></td><td align="left">GitHub sync</td></tr>
+                </table>
+            >]
+        }
+
+        spacer -> leg [style=invis]
+    }
+}
