@@ -46,6 +46,27 @@ For complete CLI reference with all flags, output schemas, and Gitea API example
 read_file("@gitea:docs/api_reference.md")
 ```
 
+For development setup, testing, and design decisions:
+
+```
+read_file("@gitea:docs/development.md")
+```
+
+## Key Details
+
+### Admin Credentials
+
+Every environment by default is created with a hardcoded admin account: `admin` / `admin1234`. The Gitea web UI is accessible at `http://localhost:<port>` and the Swagger API docs at `http://localhost:<port>/swagger`.
+
+### GitHub Token Resolution
+
+GitHub sync commands (`mirror-from-github`, `promote-to-github`) resolve tokens in this order:
+1. `--github-token` flag (explicit)
+2. `GH_TOKEN` environment variable
+3. `gh auth token` CLI command
+
+If the user has `gh auth login` done, no extra token configuration is needed.
+
 ## Troubleshooting
 
 | Problem | Fix |
@@ -56,3 +77,5 @@ read_file("@gitea:docs/api_reference.md")
 | `mirror-from-github` fails on private repo | Pass `--github-token` or ensure `gh auth login` is done |
 | Token lost after `create` | Run `amplifier-gitea token <id>` to generate a new one |
 | `promote-to-github` 404 error | Verify `--github-repo` is in `owner/repo` format (not a full URL) |
+| `No GitHub token found` | Run `gh auth login`, or set `GH_TOKEN`, or pass `--github-token` |
+| `Branch already exists` on promote | The `--github-branch` already exists on the target repo. Use a different branch name. |
