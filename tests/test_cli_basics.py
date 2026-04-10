@@ -53,13 +53,16 @@ def test_promote_requires_flags():
     assert result.returncode != 0
 
 
-def test_mirror_help_shows_no_flags():
-    """Verify mirror-from-github help includes --no-issues, --no-prs, --no-labels."""
+def test_mirror_help_shows_include_flags():
+    """Verify mirror-from-github help includes all --include-* flags."""
     result = run_cli("mirror-from-github", "--help")
     assert result.returncode == 0
-    assert "--no-issues" in result.stdout
-    assert "--no-prs" in result.stdout
-    assert "--no-labels" in result.stdout
+    assert "--include-issues" in result.stdout
+    assert "--include-prs" in result.stdout
+    assert "--include-labels" in result.stdout
+    assert "--include-milestones" in result.stdout
+    assert "--include-releases" in result.stdout
+    assert "--include-wiki" in result.stdout
 
 
 def test_mirror_github_token_is_optional():

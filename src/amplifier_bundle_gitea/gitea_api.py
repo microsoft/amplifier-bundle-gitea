@@ -77,9 +77,12 @@ def migrate_repo(
     *,
     github_token: str = "",
     mirror: bool = False,
-    issues: bool = True,
-    pull_requests: bool = True,
-    labels: bool = True,
+    issues: bool = False,
+    pull_requests: bool = False,
+    labels: bool = False,
+    milestones: bool = False,
+    releases: bool = False,
+    wiki: bool = False,
 ) -> dict:
     """Migrate an external repository into Gitea via POST /api/v1/repos/migrate."""
     payload: dict = {
@@ -91,6 +94,9 @@ def migrate_repo(
         "issues": issues,
         "pull_requests": pull_requests,
         "labels": labels,
+        "milestones": milestones,
+        "releases": releases,
+        "wiki": wiki,
     }
     if github_token:
         payload["auth_token"] = github_token
@@ -98,7 +104,7 @@ def migrate_repo(
         f"{gitea_url}/api/v1/repos/migrate",
         headers={"Authorization": f"token {token}"},
         json=payload,
-        timeout=120,
+        timeout=600,
     )
     if resp.status_code not in (200, 201):
         raise click.ClickException(f"Migration failed: {resp.status_code} {resp.text}")

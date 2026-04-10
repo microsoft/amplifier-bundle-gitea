@@ -58,6 +58,12 @@ read_file("@gitea:docs/development.md")
 
 Every environment by default is created with a hardcoded admin account: `admin` / `admin1234`. The Gitea web UI is accessible at `http://localhost:<port>` and the Swagger API docs at `http://localhost:<port>/swagger`.
 
+### Mirroring Performance
+
+By default `mirror-from-github` copies only git content (full history + all branches) and skips metadata. This is fast -- typically a few seconds.
+
+Issues and PRs are the expensive part. Enabling `--include-issues --include-prs` can take several minutes depending on the repo size. Only opt in when you actually need it.
+
 ### GitHub Token Resolution
 
 GitHub sync commands (`mirror-from-github`, `promote-to-github`) resolve tokens in this order:

@@ -100,10 +100,16 @@ curl -X POST "$GITEA_URL/api/v1/repos/admin/my-repo/issues" \
 Mirror a GitHub repo into the environment, work in isolation, then promote your changes back as a PR:
 
 ```bash
-# Mirror a repo from GitHub (copies git content, issues, PRs, labels)
+# Mirror a repo from GitHub (default: full history, default branch only)
 amplifier-gitea mirror-from-github <id> \
   --github-repo https://github.com/org/repo \
   --github-token $(gh auth token)
+
+# Include all branches and issues/PRs
+amplifier-gitea mirror-from-github <id> \
+  --github-repo https://github.com/org/repo \
+  --github-token $(gh auth token) \
+  --include-issues --include-prs --include-labels
 
 # Promote a branch back to GitHub as a pull request
 amplifier-gitea promote-to-github <id> \

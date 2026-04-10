@@ -127,22 +127,44 @@ def token(id: str) -> None:
 @click.argument("id")
 @click.option("--github-repo", required=True, help="GitHub repository URL.")
 @click.option("--github-token", default="", help="GitHub personal access token.")
-@click.option("--no-issues", is_flag=True, default=False, help="Skip migrating issues.")
+@click.option("--include-issues", is_flag=True, default=False, help="Include issues.")
 @click.option(
-    "--no-prs", is_flag=True, default=False, help="Skip migrating pull requests."
+    "--include-prs", is_flag=True, default=False, help="Include pull requests."
 )
-@click.option("--no-labels", is_flag=True, default=False, help="Skip migrating labels.")
+@click.option("--include-labels", is_flag=True, default=False, help="Include labels.")
+@click.option(
+    "--include-milestones", is_flag=True, default=False, help="Include milestones."
+)
+@click.option(
+    "--include-releases", is_flag=True, default=False, help="Include releases."
+)
+@click.option("--include-wiki", is_flag=True, default=False, help="Include wiki.")
 def mirror_from_github(
     id: str,
     github_repo: str,
     github_token: str,
-    no_issues: bool,
-    no_prs: bool,
-    no_labels: bool,
+    include_issues: bool,
+    include_prs: bool,
+    include_labels: bool,
+    include_milestones: bool,
+    include_releases: bool,
+    include_wiki: bool,
 ) -> None:
-    """Mirror a GitHub repo into a Gitea environment."""
+    """Mirror a GitHub repo into a Gitea environment.
+
+    By default mirrors the full commit history and all branches.
+    Use --include-* flags to opt in to metadata (issues, PRs, etc.).
+    """
     result = github_sync.mirror(
-        id, github_repo, github_token, no_issues, no_prs, no_labels
+        id,
+        github_repo,
+        github_token,
+        include_issues,
+        include_prs,
+        include_labels,
+        include_milestones,
+        include_releases,
+        include_wiki,
     )
     click.echo(json.dumps(result, indent=2))
 

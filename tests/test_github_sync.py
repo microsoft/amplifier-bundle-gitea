@@ -49,10 +49,18 @@ def gitea_env(free_port):
 
 @pytest.mark.integration
 def test_mirror_public_repo(gitea_env, github_token):
-    args = ["mirror-from-github", gitea_env["id"], "--github-repo", MIRROR_SOURCE_REPO]
+    args = [
+        "mirror-from-github",
+        gitea_env["id"],
+        "--github-repo",
+        MIRROR_SOURCE_REPO,
+        "--include-issues",
+        "--include-prs",
+        "--include-labels",
+    ]
     if github_token:
         args.extend(["--github-token", github_token])
-    data, _ = run_cli_json(*args, timeout=120)
+    data, _ = run_cli_json(*args, timeout=600)
     assert data["source"] == MIRROR_SOURCE_REPO
     assert data["gitea_repo"] == f"admin/{MIRROR_REPO_NAME}"
     assert data["migrated"]["git"] is True
@@ -81,19 +89,18 @@ def test_mirror_duplicate_fails(gitea_env, github_token):
 
 
 @pytest.mark.integration
-def test_mirror_with_no_flags(gitea_env, github_token):
+def test_mirror_default_git_only(gitea_env, github_token):
+    """Default mirror (no --include-* flags) should still fail here because the repo already exists."""
     args = [
         "mirror-from-github",
         gitea_env["id"],
         "--github-repo",
         MIRROR_SOURCE_REPO,
-        "--no-issues",
-        "--no-prs",
-        "--no-labels",
     ]
     if github_token:
         args.extend(["--github-token", github_token])
     result = run_cli(*args, timeout=120)
+    # Fails because repo was already mirrored in test_mirror_public_repo
     assert result.returncode != 0
     assert "Missing option" not in result.stderr
 
@@ -126,9 +133,6 @@ def test_promote_round_trip(gitea_env, github_test_repo):
             f"https://github.com/{github_test_repo}",
             "--github-token",
             token,
-            "--no-issues",
-            "--no-prs",
-            "--no-labels",
             timeout=120,
         )
 

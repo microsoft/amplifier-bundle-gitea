@@ -1,6 +1,6 @@
 # Copyright (c) Microsoft. All rights reserved.
 
-"""Orchestration logic for GitHub ↔ Gitea sync operations."""
+"""Orchestration logic for GitHub <-> Gitea sync operations."""
 
 from __future__ import annotations
 
@@ -13,9 +13,12 @@ def mirror(
     env_id: str,
     github_repo: str,
     github_token: str,
-    no_issues: bool,
-    no_prs: bool,
-    no_labels: bool,
+    include_issues: bool,
+    include_prs: bool,
+    include_labels: bool,
+    include_milestones: bool,
+    include_releases: bool,
+    include_wiki: bool,
 ) -> dict:
     """Mirror a GitHub repo into a Gitea environment.
 
@@ -39,9 +42,12 @@ def mirror(
         repo_name=repo_name,
         github_token=github_token,
         mirror=False,
-        issues=not no_issues,
-        pull_requests=not no_prs,
-        labels=not no_labels,
+        issues=include_issues,
+        pull_requests=include_prs,
+        labels=include_labels,
+        milestones=include_milestones,
+        releases=include_releases,
+        wiki=include_wiki,
     )
 
     return {
@@ -51,9 +57,12 @@ def mirror(
         "source": github_repo,
         "migrated": {
             "git": True,
-            "issues": not no_issues,
-            "pull_requests": not no_prs,
-            "labels": not no_labels,
+            "issues": include_issues,
+            "pull_requests": include_prs,
+            "labels": include_labels,
+            "milestones": include_milestones,
+            "releases": include_releases,
+            "wiki": include_wiki,
         },
     }
 

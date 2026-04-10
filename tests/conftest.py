@@ -15,6 +15,12 @@ def pytest_addoption(parser):
         help="Run integration tests that require Docker",
     )
     parser.addoption(
+        "--run-e2e",
+        action="store_true",
+        default=False,
+        help="Run end-to-end tests (requires Docker + GitHub token)",
+    )
+    parser.addoption(
         "--run-github",
         action="store_true",
         default=False,
@@ -32,6 +38,12 @@ def pytest_collection_modifyitems(config, items):
         skip = pytest.mark.skip(reason="needs --run-integration")
         for item in items:
             if "integration" in item.keywords:
+                item.add_marker(skip)
+
+    if not config.getoption("--run-e2e"):
+        skip = pytest.mark.skip(reason="needs --run-e2e")
+        for item in items:
+            if "e2e" in item.keywords:
                 item.add_marker(skip)
 
     run_github = config.getoption("--run-github")

@@ -45,5 +45,6 @@ testpaths = ["tests"]
 pythonpath = ["tests"]
 markers = [
     "integration: tests that require Docker (deselected by default, use --run-integration)",
+    "e2e: end-to-end tests requiring Docker + GitHub token (deselected by default, use --run-e2e)",
     "github: tests that require GitHub access (deselected by default, use --run-github --github-test-repo)",
 ]

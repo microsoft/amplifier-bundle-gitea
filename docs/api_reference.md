@@ -237,8 +237,11 @@ curl -X POST "http://localhost:10110/api/v1/repos/admin/my-repo/issues" \
 
 ### `mirror-from-github`
 
-One-time migration of a GitHub repo into a Gitea environment. 
-Copies git content, issues, PRs, and labels. Does not set up ongoing sync -- this is a snapshot.
+One-time migration of a GitHub repo into a Gitea environment.
+Does not set up ongoing sync -- this is a snapshot.
+
+By default mirrors the full commit history and all branches.
+Use `--include-*` flags to opt in to metadata (issues, PRs, etc.).
 
 Internally calls Gitea's `POST /api/v1/repos/migrate`.
 
@@ -246,9 +249,12 @@ Internally calls Gitea's `POST /api/v1/repos/migrate`.
 amplifier-gitea mirror-from-github <id> \
   --github-repo https://github.com/org/repo \
   [--github-token $GH_TOKEN] \
-  [--no-issues] \
-  [--no-prs] \
-  [--no-labels]
+  [--include-issues] \
+  [--include-prs] \
+  [--include-labels] \
+  [--include-milestones] \
+  [--include-releases] \
+  [--include-wiki]
 ```
 
 `<id>` (required)
@@ -262,14 +268,23 @@ amplifier-gitea mirror-from-github <id> \
   rate limits. Public repos can be mirrored without a token. Consumers
   signed into the GitHub CLI can use `--github-token $(gh auth token)`.
 
-`--no-issues` (optional)
-  Skip migrating issues from the source repository.
+`--include-issues` (optional)
+  Include issues from the source repository.
 
-`--no-prs` (optional)
-  Skip migrating pull requests from the source repository.
+`--include-prs` (optional)
+  Include pull requests from the source repository.
 
-`--no-labels` (optional)
-  Skip migrating labels from the source repository.
+`--include-labels` (optional)
+  Include labels from the source repository.
+
+`--include-milestones` (optional)
+  Include milestones from the source repository.
+
+`--include-releases` (optional)
+  Include releases from the source repository.
+
+`--include-wiki` (optional)
+  Include wiki from the source repository.
 
 Returns:
 
@@ -281,9 +296,12 @@ Returns:
   "source": "https://github.com/org/repo",
   "migrated": {
     "git": true,
-    "issues": true,
-    "pull_requests": true,
-    "labels": true
+    "issues": false,
+    "pull_requests": false,
+    "labels": false,
+    "milestones": false,
+    "releases": false,
+    "wiki": false
   }
 }
 ```

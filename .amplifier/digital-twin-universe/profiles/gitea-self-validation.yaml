@@ -1,0 +1,91 @@
+# Verifies amplifier-bundle-gitea works when installed from local source.
+# Installs the CLI inside an Incus container with Docker support,
+# then creates an inner Gitea instance accessible from the host.
+#
+# Two Gitea layers:
+#   OUTER (host-side) -- serves the amplifier-bundle-gitea source code so
+#     local changes can be tested without pushing to GitHub.
+#   INNER (inside DTU) -- created by the installed amplifier-gitea CLI as
+#     the actual system under test. Forwarded to localhost:10120 on the host
+#     so you can browse it and interact with it directly.
+#
+# Prerequisites:
+#   - A running Gitea instance on the host with this repo pushed
+#
+# Usage:
+#   amplifier-gitea create --port 10110
+#   # push this repo to Gitea, then:
+#   amplifier-digital-twin launch .amplifier/digital-twin-universe/profiles/gitea-self-validation.yaml \
+#     --var GITEA_URL=http://localhost:10110 \
+#     --var GITEA_TOKEN=<token from create>
+#
+#   # After launch, inner Gitea is at http://localhost:10120 (admin/admin1234)
+#
+# Variables (provided at launch via --var):
+#   GITEA_URL   -- Gitea base URL (e.g. http://localhost:10110)
+#   GITEA_TOKEN -- API token for Gitea
+name: gitea-self-validation
+description: >
+  Installs amplifier-bundle-gitea from local Gitea and validates the
+  full lifecycle: create an inner Gitea instance accessible from the host.
+base:
+  image: ubuntu:24.04
+  config:
+    security.nesting: "true"
+
+url_rewrites:
+  auth:
+    username: admin
+    token_var: GITEA_TOKEN
+  rules:
+    - match: github.com/microsoft/amplifier-bundle-gitea
+      target: ${GITEA_URL}/admin/amplifier-bundle-gitea
+
+passthrough:
+  allow_external: true
+
+access:
+  ports:
+    - host: 10120
+      container: 10120
+      label: Inner Gitea
+
+provision:
+  setup_cmds:
+    # Core tooling
+    - apt-get update && apt-get install -y git curl ca-certificates
+
+    # Install Docker Engine (needed by amplifier-gitea to run inner Gitea)
+    - |
+      curl -fsSL https://get.docker.com | sh
+      systemctl enable docker
+      systemctl start docker
+
+    # Install uv
+    - curl -LsSf https://astral.sh/uv/install.sh | sh
+
+    # Install amplifier-gitea from Gitea (picks up local changes via URL rewrite)
+    - |
+      export PATH="/root/.local/bin:$PATH"
+      uv tool install git+https://github.com/microsoft/amplifier-bundle-gitea@main
+
+    # Verify CLI is available
+    - amplifier-gitea --help
+
+    # Create the inner Gitea instance (left running for interactive use)
+    - amplifier-gitea create --port 10120
+
+    # Mirror microsoft/amplifier into the inner Gitea (default: git-only, fast)
+    - |
+      INNER_ID=$(amplifier-gitea list | python3 -c "import sys,json; print(json.load(sys.stdin)[0]['id'])")
+      amplifier-gitea mirror-from-github "$INNER_ID" \
+        --github-repo https://github.com/microsoft/amplifier
+
+readiness:
+  - name: docker-running
+    command: "docker info > /dev/null 2>&1"
+  - name: gitea-cli-available
+    command: "PATH=/root/.local/bin:$PATH amplifier-gitea --help > /dev/null 2>&1"
+  - name: inner-gitea-ready
+    http:
+      url: http://localhost:10120/api/v1/version
