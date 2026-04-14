@@ -6,8 +6,7 @@ Outside of potentially creating noise or irreversible changes, this also means c
 
 Amplifier Gitea is designed to be spun up on demand and torn down when no longer needed.
 Usable for any workflow that needs a local, disposable git server.
-It supports most Git operations like commits and branches, features like Issues and PRs, 
-and has additional abstractions for interfacing with GitHub.
+It supports most Git operations like commits and branches, features like Issues and PRs, and has additional abstractions for interfacing with GitHub.
 
 ![Architecture Dot File](docs/amplifier-gitea-architecture.svg)
 
