@@ -34,19 +34,17 @@ uv tool install git+https://github.com/microsoft/amplifier-bundle-gitea@main
 
 This repo is also an Amplifier bundle. The bundle provides a `gitea` skill and context awareness so the AI model knows how to use the `amplifier-gitea` CLI. The CLI must be installed separately (see above).
 
-`--app` composes the bundle onto every Amplifier session. Remove it to only register the bundle for later activation with `amplifier bundle use`.
+If you use `amplifier-foundation`, this bundle is included automatically (transitively via `amplifier-bundle-amplifier-tester` → `digital-twin-universe`). No additional install is needed.
 
-For interactive Amplifier sessions, install as an app bundle (recommended):
-```bash
-amplifier bundle add git+https://github.com/microsoft/amplifier-bundle-gitea@main --app
-```
+To compose into a custom bundle (without foundation), reference the behavior:
 
-To compose into an existing bundle:
 ```bash
 amplifier bundle add "git+https://github.com/microsoft/amplifier-bundle-gitea@main#subdirectory=behaviors/gitea.yaml" --app
 ```
 
-Otherwise, consider using the CLI directly.
+`--app` composes the bundle onto every Amplifier session. Remove it to only register the bundle for later activation with `amplifier bundle use`.
+
+This bundle doesn't ship a runtime (no provider, orchestrator, or tools) — it must be composed onto a bundle that does, like `amplifier-foundation`.
 
 For development setup, see [docs/development.md](docs/development.md).
 
