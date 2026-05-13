@@ -8,6 +8,11 @@ Amplifier Gitea is designed to be spun up on demand and torn down when no longer
 Usable for any workflow that needs a local, disposable git server.
 It supports most Git operations like commits and branches, features like Issues and PRs, and has additional abstractions for interfacing with GitHub.
 
+Example Uses:
+
+- "Mirror this GitHub repo into a Gitea environment so I can experiment freely, then promote my changes back as a PR when I'm done."
+- "I need a disposable git server with Issues and PRs to test a workflow against, without touching any real GitHub repos."
+
 ![Architecture Dot File](docs/amplifier-gitea-architecture.svg)
 
 A consumer creates a Gitea environment, mirrors repos from GitHub
