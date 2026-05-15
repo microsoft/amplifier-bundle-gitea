@@ -64,10 +64,8 @@ provision:
     # Install uv
     - curl -LsSf https://astral.sh/uv/install.sh | sh
 
-    # Install amplifier-gitea from Gitea (picks up local changes via URL rewrite)
-    - |
-      export PATH="/root/.local/bin:$PATH"
-      uv tool install git+https://github.com/microsoft/amplifier-bundle-gitea@main
+    # Install amplifier-gitea from Gitea (picks up local changes via URL rewrite).
+    - uv tool install git+https://github.com/microsoft/amplifier-bundle-gitea@main
 
     # Verify CLI is available
     - amplifier-gitea --help
@@ -85,7 +83,7 @@ readiness:
   - name: docker-running
     command: "docker info > /dev/null 2>&1"
   - name: gitea-cli-available
-    command: "PATH=/root/.local/bin:$PATH amplifier-gitea --help > /dev/null 2>&1"
+    command: "command -v amplifier-gitea"
   - name: inner-gitea-ready
     http:
       url: http://localhost:10120/api/v1/version
