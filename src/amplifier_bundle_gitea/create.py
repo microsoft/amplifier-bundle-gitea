@@ -33,6 +33,7 @@ def create_environment(
     add_host: tuple[str, ...],
     hostname: str | None,
     volumes: dict | None = None,
+    health_check_host: str = "localhost",
 ) -> dict:
     """Create a new Gitea environment.
 
@@ -42,6 +43,24 @@ def create_environment(
 
     If any step after container creation fails, the container
     is removed to prevent orphans.
+
+    Args:
+        port: Host port to bind Gitea's internal port to.
+        name: Optional human-readable name for the environment.
+        image: Docker image to use for the Gitea container.
+        network: Optional Docker network to attach the container to.
+        network_alias: Optional alias on the Docker network (requires network).
+        add_host: Extra host entries to inject into the container (--add-host).
+        hostname: Optional hostname for the container.
+        volumes: Optional volume mounts dict passed to docker-py.
+        health_check_host: Hostname or IP used to poll Gitea's health endpoint.
+            Defaults to ``"localhost"``, which is correct when the caller runs on
+            the same host as the Docker daemon.  Pass the actual host address
+            (e.g. the HOST_GW value such as ``"10.119.176.1"``) when invoking
+            from inside a DTU or container where the Docker daemon is proxied
+            from the host — in that scenario Gitea's port binds to the HOST's
+            ``0.0.0.0``, not the DTU's loopback, so polling ``"localhost"``
+            times out after 60 s.
     """
     # 1. Generate ID
     env_id = f"gitea-{uuid.uuid4().hex[:8]}"
@@ -103,7 +122,7 @@ def create_environment(
             net.connect(container, **connect_kwargs)
 
         # 6. Wait for healthy
-        gitea_url = f"http://localhost:{port}"
+        gitea_url = f"http://{health_check_host}:{port}"
         gitea_api.wait_until_healthy(gitea_url)
 
         # 7. Create admin user (must run as 'git' user, not root)
