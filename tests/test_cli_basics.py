@@ -6,6 +6,8 @@ Verifies the installed binary responds correctly to flags,
 missing arguments, and help text.
 """
 
+import inspect
+
 from helpers import run_cli
 
 
@@ -99,3 +101,37 @@ def test_promote_help_shows_optional_flags():
     assert "--github-token" in result.stdout
     assert "--github-branch" in result.stdout
     assert "--base" in result.stdout
+
+
+# ---------------------------------------------------------------------------
+# create_environment signature tests (no Docker required)
+# ---------------------------------------------------------------------------
+
+
+def test_create_environment_has_health_check_host_param():
+    """Verify health_check_host parameter exists and defaults to 'localhost'.
+
+    This is a backward-compat guard: the parameter must be optional so all
+    existing callers that omit it keep working without changes.
+    """
+    from amplifier_bundle_gitea.create import create_environment
+
+    sig = inspect.signature(create_environment)
+    assert "health_check_host" in sig.parameters, (
+        "create_environment must accept health_check_host keyword argument"
+    )
+    param = sig.parameters["health_check_host"]
+    assert param.default == "localhost", (
+        f"health_check_host must default to 'localhost', got {param.default!r}"
+    )
+
+
+def test_create_environment_health_check_host_is_optional():
+    """Confirm health_check_host has a default so existing callers need no changes."""
+    from amplifier_bundle_gitea.create import create_environment
+
+    sig = inspect.signature(create_environment)
+    param = sig.parameters["health_check_host"]
+    assert param.default is not inspect.Parameter.empty, (
+        "health_check_host must be an optional parameter with a default value"
+    )
