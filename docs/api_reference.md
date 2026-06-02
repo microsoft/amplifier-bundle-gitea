@@ -245,6 +245,12 @@ Use `--include-*` flags to opt in to metadata (issues, PRs, etc.).
 
 Internally calls Gitea's `POST /api/v1/repos/migrate`.
 
+Shallow clones are not supported. The Gitea migrate API has no `depth`
+parameter, so migration always pulls full history. There is no way to
+request a shallow mirror through `mirror-from-github`. If you need a
+shallow checkout, clone with `git clone --depth=N` into a repo created
+via the plain Gitea API (`create` plus push) instead of using migrate.
+
 ```
 amplifier-gitea mirror-from-github <id> \
   --github-repo https://github.com/org/repo \
