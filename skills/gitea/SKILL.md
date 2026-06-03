@@ -73,6 +73,33 @@ GitHub sync commands (`mirror-from-github`, `promote-to-github`) resolve tokens 
 
 If the user has `gh auth login` done, no extra token configuration is needed.
 
+## Deploying Local Changes Without Committing
+
+To test a local repo's working tree (committed + staged + unstaged + untracked + deletions) through a Gitea mirror without committing or staging anything in the source repo, snapshot it into a throwaway clone and push from there. Use this when the mirror must reflect your exact local state but you must not mutate the source repo (no `git add`/`commit`/`stash` in it).
+
+First make sure the repo exists in Gitea (`mirror-from-github <id> --github-repo ...` or create an empty repo), then:
+
+```bash
+PORT=...   # from `amplifier-gitea status <id>`
+TOKEN=...  # from `amplifier-gitea token <id>`
+SNAP="$(mktemp -d)/<repo-name>"
+git clone --local --no-hardlinks "<local-repo>" "$SNAP"
+# overlay staged + unstaged + untracked (non-ignored) files from the working tree
+( cd "<local-repo>" && git ls-files -z --cached --modified --others --exclude-standard ) \
+  | rsync -a --files-from=- --from0 "<local-repo>/" "$SNAP/"
+# mirror tracked-file deletions
+( cd "<local-repo>" && git ls-files -z --deleted ) \
+  | ( cd "$SNAP" && xargs -0 --no-run-if-empty rm -f )
+# single throwaway commit IN THE SNAPSHOT, then force-push to the mirror
+cd "$SNAP"
+git -c user.email=snapshot@local -c user.name="Gitea Snapshot" add -A
+git -c user.email=snapshot@local -c user.name="Gitea Snapshot" commit --allow-empty -m "working-tree snapshot"
+git -c credential.helper= push --force \
+  "http://admin:$TOKEN@localhost:$PORT/admin/<repo-name>.git" HEAD:refs/heads/main
+```
+
+All `git add`/`commit` happens only in the temp snapshot, never in the source repo. If snapshotting fails, abort -- never fall back to operating on the source working tree.
+
 ## Troubleshooting
 
 | Problem | Fix |
