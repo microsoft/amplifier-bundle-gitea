@@ -69,6 +69,22 @@ def generate_token(url: str, token_name: str | None = None) -> str:
     return token_value
 
 
+class RepoExistsError(click.ClickException):
+    """Raised by migrate_repo when Gitea responds 409 'repository already exists'.
+
+    A more specific subclass of ClickException so callers can distinguish the
+    benign already-exists case from genuine migration failures (auth, network,
+    invalid clone URL, etc.) without string-matching the message. The
+    ``repo_name`` attribute carries the conflicting repo name so callers can
+    fetch its existing metadata via ``get_repo`` if they want to proceed
+    idempotently.
+    """
+
+    def __init__(self, repo_name: str, message: str) -> None:
+        super().__init__(message)
+        self.repo_name = repo_name
+
+
 def migrate_repo(
     gitea_url: str,
     token: str,
@@ -84,7 +100,12 @@ def migrate_repo(
     releases: bool = False,
     wiki: bool = False,
 ) -> dict:
-    """Migrate an external repository into Gitea via POST /api/v1/repos/migrate."""
+    """Migrate an external repository into Gitea via POST /api/v1/repos/migrate.
+
+    Raises ``RepoExistsError`` (a ClickException subclass) on Gitea's 409
+    "repository already exists" response, so callers can choose to treat it
+    as a no-op rather than a fatal error.
+    """
     payload: dict = {
         "clone_addr": clone_addr,
         "repo_name": repo_name,
@@ -106,8 +127,35 @@ def migrate_repo(
         json=payload,
         timeout=600,
     )
+    if resp.status_code == 409:
+        raise RepoExistsError(
+            repo_name,
+            f"Repository '{ADMIN_USER}/{repo_name}' already exists in Gitea: {resp.text}",
+        )
     if resp.status_code not in (200, 201):
         raise click.ClickException(f"Migration failed: {resp.status_code} {resp.text}")
+    return resp.json()
+
+
+def get_repo(gitea_url: str, token: str, owner: str, repo_name: str) -> dict:
+    """Fetch a repo's metadata via GET /api/v1/repos/{owner}/{repo_name}.
+
+    Returns the same shape that ``migrate_repo`` returns on success, so
+    callers can use it as a drop-in for the already-exists case.
+    """
+    resp = httpx.get(
+        f"{gitea_url}/api/v1/repos/{owner}/{repo_name}",
+        headers={"Authorization": f"token {token}"},
+        timeout=30,
+    )
+    if resp.status_code == 404:
+        raise click.ClickException(
+            f"Repository '{owner}/{repo_name}' not found in Gitea"
+        )
+    if not resp.is_success:
+        raise click.ClickException(
+            f"Failed to fetch repo '{owner}/{repo_name}': {resp.status_code} {resp.text}"
+        )
     return resp.json()
 
 
