@@ -1,0 +1,10 @@
+Bundle structure (YAML)	Parse bundle.md, behaviors/*.yaml and skills/*/SKILL.md [36;1m            print("OK  bundle.md  (bundle.name=" + str(name) + ")")[0m
+Bundle structure (YAML)	Parse bundle.md, behaviors/*.yaml and skills/*/SKILL.md [36;1mprint("Bundle structure OK.")[0m
+Bundle structure (YAML)	Parse bundle.md, behaviors/*.yaml and skills/*/SKILL.md OK  bundle.md  (bundle.name=gitea)
+Bundle structure (YAML)	Parse bundle.md, behaviors/*.yaml and skills/*/SKILL.md OK  behaviors/gitea.yaml  (bundle.name=gitea-behavior)
+Bundle structure (YAML)	Parse bundle.md, behaviors/*.yaml and skills/*/SKILL.md OK  skills/gitea/SKILL.md  (name=gitea, description=322 chars)
+Bundle structure (YAML)	Parse bundle.md, behaviors/*.yaml and skills/*/SKILL.md Bundle structure OK.
+Tests (py3.13)	Run test suite 12 passed, 26 skipped in 2.25s
+Tests (py3.12)	Run test suite 12 passed, 26 skipped in 6.54s
+Tests (py3.11)	Run test suite 12 passed, 26 skipped in 2.32s
+Lint (ruff)	Lint All checks passed!
