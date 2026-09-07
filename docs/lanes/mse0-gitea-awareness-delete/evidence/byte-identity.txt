@@ -1,0 +1,5 @@
+=== default-mode byte-identity: amplifier-gitea --help ===
+IDENTICAL (674 bytes)
+
+=== src/ tree byte-identity vs merge-base ===
+(empty above = no code changed)
