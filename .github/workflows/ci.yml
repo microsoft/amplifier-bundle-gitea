@@ -1,0 +1,251 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+# Minimal read-only token -- no secrets needed or exposed.
+# Safe for Dependabot PRs and external fork contributors.
+#
+# NOTHING HERE NEEDS A KEY, A TOKEN, OR A NETWORK SERVICE. The repo's Docker
+# lifecycle tests (`--run-integration`), its GitHub round-trip tests
+# (`--run-github`) and its e2e mirror tests (`--run-e2e`) are all opt-in behind
+# flags in tests/conftest.py, and no job below passes them. See "what the suite
+# actually covers" in the PR body.
+permissions:
+  contents: read
+
+# No `paths:` filters anywhere in this file, on purpose. A path filter that does
+# not match leaves a required check permanently "expected" (or silently absent),
+# which is indistinguishable from a passing one. These jobs are cheap; they run
+# on every push to main and every pull request.
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # Lint -- pyflakes + pycodestyle errors, at a PINNED tool version AND a
+  # PINNED rule set. Both pins are load-bearing:
+  #
+  #   * ruff 0.16.6      -- the version this repo's own dev group resolves to
+  #                         (`uv sync` installs ruff==0.16.6, measured
+  #                         2026-09-07). Pinned so a future ruff release cannot
+  #                         turn this red without a visible change to this file.
+  #   * --isolated       -- ignore any ruff config, including one added later or
+  #                         one inherited from a parent directory, so the gate
+  #                         means the same thing in CI and on a laptop.
+  #   * --select E4,E7,E9,F
+  #                      -- ruff's classic default tier: pycodestyle errors plus
+  #                         pyflakes (undefined names, unused imports, f-string
+  #                         bugs). Verified "All checks passed!" on clean main
+  #                         @9d54093.
+  #
+  # WHY THE RULE SET IS NAMED RATHER THAN LEFT IMPLICIT, stated plainly rather
+  # than left to look like an oversight: ruff 0.16 SHIPS A WIDER DEFAULT SELECT
+  # than the classic tier. A bare `uvx ruff@0.16.6 check .` on clean main
+  # @9d54093 reports 21 findings (I001 x5, PLW1510 x4, S110 x3, BLE001 x3,
+  # EXE001 x2, UP017, RUF015) -- and 3 of them are in
+  # docs/lanes/mse0-*/evidence/, which is a FROZEN EVIDENCE ARTIFACT of a
+  # completed measurement lane and must not be rewritten to please a linter.
+  # Naming the tier here keeps this workflow honest about exactly what it
+  # gates, and leaves that cleanup as a visible follow-up with a one-line
+  # reproduce command:
+  #
+  #     uvx ruff@0.16.6 check .
+  #
+  # `ruff format --check` is deliberately NOT run here either. At 0.16.6 it
+  # reports "4 files would be reformatted" on clean main; reformatting source is
+  # out of scope for a workflow-only PR and would collide with every in-flight
+  # branch. Reproduce with: uvx ruff@0.16.6 format --check .
+  # ---------------------------------------------------------------------------
+  lint:
+    name: Lint (ruff)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+
+      - name: Lint
+        run: uvx ruff@0.16.6 check --isolated --select E4,E7,E9,F .
+
+  # ---------------------------------------------------------------------------
+  # The repo's own test suite, across supported Python versions
+  # (requires-python = ">=3.11").
+  #
+  # `uv run pytest` is exactly the command docs/development.md documents as the
+  # default local run, so CI and a contributor's laptop execute the same thing.
+  #
+  # No `--frozen`: this repo does not commit a uv.lock (.gitignore:41), so
+  # dependencies resolve fresh each run.
+  #
+  # A hang must fail LOUDLY and fast rather than sit burning runner time until
+  # the 6h default -- a job stuck at "in_progress" reads as "not done yet"
+  # rather than "broken", which is how a false green gets merged.
+  # ---------------------------------------------------------------------------
+  test:
+    name: Tests (py${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+
+      # tests/helpers.py invokes the CLI as a real subprocess with
+      # `uv run --no-sync --project <repo>`, so the project venv must already
+      # exist and must be the one under test. `uv sync --python` builds it at
+      # the matrix interpreter; --no-sync in the helper then reuses it.
+      - name: Install project and dev dependencies
+        run: uv sync --python ${{ matrix.python-version }}
+
+      - name: Run test suite
+        run: uv run --no-sync pytest -q --tb=short
+
+  # ---------------------------------------------------------------------------
+  # Bundle structure -- every YAML this bundle ships must parse, and the two
+  # always-on surfaces must carry the fields the loader reads.
+  #
+  # This is the gate that protects the Stage-1 awareness work (9d54093): that
+  # change deleted context/gitea-awareness.md and moved three missing triggers
+  # into skills/gitea/SKILL.md's `description`. If a later edit empties that
+  # description, or breaks bundle.md's frontmatter, the triggers silently stop
+  # matching and nothing else in this repo notices. So the check asserts the
+  # description EXISTS AND IS NON-EMPTY, not merely that the file parses.
+  #
+  # Kept inline rather than as a checked-in script because this PR deliberately
+  # adds no file to the repo other than this workflow.
+  #
+  # Nothing is interpolated into the Python source below (no ${{ }} inside the
+  # heredoc, and the heredoc delimiter is quoted) -- a repo path interpolated
+  # into Python source is how a sibling repo turned a backslash-a into BEL and
+  # got a silent empty result with exit 0.
+  #
+  # Every glob treats an EMPTY match as a FAILURE: a check that reports
+  # "0 problems in 0 files" and exits 0 looks exactly like a working one.
+  # ---------------------------------------------------------------------------
+  bundle-structure:
+    name: Bundle structure (YAML)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install PyYAML
+        run: python -m pip install --quiet 'PyYAML>=6.0'
+
+      - name: Parse bundle.md, behaviors/*.yaml and skills/*/SKILL.md
+        run: |
+          python - <<'PY'
+          import pathlib
+          import sys
+
+          import yaml
+
+          root = pathlib.Path.cwd()
+          failures: list[str] = []
+          checked = 0
+
+
+          def frontmatter(text: str, label: str):
+              """Return the parsed YAML frontmatter, or None after recording why not."""
+              if not text.startswith("---\n"):
+                  failures.append(label + ": no YAML frontmatter (file does not open with '---')")
+                  return None
+              end = text.find("\n---", 3)
+              if end == -1:
+                  failures.append(label + ": frontmatter opened but never closed")
+                  return None
+              try:
+                  return yaml.safe_load(text[4 : end + 1])
+              except yaml.YAMLError as exc:
+                  failures.append(label + " frontmatter: " + str(exc))
+                  return None
+
+
+          # --- bundle.md -----------------------------------------------------
+          bundle_md = root / "bundle.md"
+          if not bundle_md.is_file():
+              failures.append("bundle.md is missing")
+          else:
+              data = frontmatter(bundle_md.read_text(encoding="utf-8"), "bundle.md")
+              if data is not None:
+                  checked += 1
+                  name = data.get("bundle", {}).get("name") if isinstance(data, dict) else None
+                  if not name:
+                      failures.append("bundle.md frontmatter: missing bundle.name")
+                  else:
+                      print("OK  bundle.md  (bundle.name=" + str(name) + ")")
+
+          # --- behaviors/*.yaml ----------------------------------------------
+          behaviors = sorted((root / "behaviors").glob("*.yaml"))
+          if not behaviors:
+              failures.append(
+                  "behaviors/*.yaml matched NOTHING -- a structure gate that checks zero files is decoration"
+              )
+          for path in behaviors:
+              # .as_posix(), not str(): str() emits OS-native separators.
+              rel = path.relative_to(root).as_posix()
+              try:
+                  data = yaml.safe_load(path.read_text(encoding="utf-8"))
+                  checked += 1
+              except yaml.YAMLError as exc:
+                  failures.append(rel + ": " + str(exc))
+                  continue
+              name = data.get("bundle", {}).get("name") if isinstance(data, dict) else None
+              if not name:
+                  failures.append(rel + ": missing bundle.name")
+              else:
+                  print("OK  " + rel + "  (bundle.name=" + str(name) + ")")
+
+          # --- skills/*/SKILL.md ---------------------------------------------
+          # The skill description is the ONLY always-on surface this bundle has
+          # since 9d54093 removed context/gitea-awareness.md. An empty one is a
+          # silent capability loss, so it is a hard failure here.
+          skills = sorted((root / "skills").glob("*/SKILL.md"))
+          if not skills:
+              failures.append(
+                  "skills/*/SKILL.md matched NOTHING -- a structure gate that checks zero files is decoration"
+              )
+          for path in skills:
+              rel = path.relative_to(root).as_posix()
+              data = frontmatter(path.read_text(encoding="utf-8"), rel)
+              if data is None:
+                  continue
+              checked += 1
+              if not isinstance(data, dict):
+                  failures.append(rel + ": frontmatter is not a mapping")
+                  continue
+              name = data.get("name")
+              description = data.get("description")
+              if not name:
+                  failures.append(rel + ": missing skill name")
+              if not (isinstance(description, str) and description.strip()):
+                  failures.append(rel + ": missing or empty description (skill triggers live here)")
+              if name and isinstance(description, str) and description.strip():
+                  print(
+                      "OK  " + rel + "  (name=" + str(name)
+                      + ", description=" + str(len(description)) + " chars)"
+                  )
+
+          print("")
+          print(str(checked) + " YAML document(s) parsed.")
+          if failures:
+              print("")
+              print("FAILURES:")
+              for item in failures:
+                  print("  - " + item)
+              sys.exit(1)
+          print("Bundle structure OK.")
+          PY
