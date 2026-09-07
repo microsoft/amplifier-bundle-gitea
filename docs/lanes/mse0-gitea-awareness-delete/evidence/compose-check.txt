@@ -1,0 +1,20 @@
+########## BEFORE (merge-base 261953d5372ff487d0a9872d914724ef6115e5a0) ##########
+source                       : ./bundle.md
+composed                     : OK (load_bundle strict=True returned)
+bundle.description           : Ephemeral Gitea Docker environments for isolated git workflows
+tools                        : 1
+pending context includes     : 1
+  - gitea:context/gitea-awareness.md
+context files contributed    : 1
+  - gitea:context/gitea-awareness.md -> /tmp/tmp.IW4BSo16UR/before/context/gitea-awareness.md  (exists=True)
+exit=0
+
+########## AFTER (this branch) ##########
+source                       : ./bundle.md
+composed                     : OK (load_bundle strict=True returned)
+bundle.description           : Ephemeral Gitea Docker environments for isolated git workflows
+tools                        : 1
+pending context includes     : 0
+context files contributed    : 0
+  (none)
+exit=0

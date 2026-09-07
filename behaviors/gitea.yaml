@@ -9,7 +9,3 @@ tools:
     config:
       skills:
         - "git+https://github.com/microsoft/amplifier-bundle-gitea@main#subdirectory=skills"
-
-context:
-  include:
-    - gitea:context/gitea-awareness.md

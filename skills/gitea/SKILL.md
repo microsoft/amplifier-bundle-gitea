@@ -1,6 +1,6 @@
 ---
 name: gitea
-description: Use when managing ephemeral Gitea Docker environments, mirroring GitHub repos for isolated work, or promoting changes back to GitHub as PRs. Triggers on gitea, ephemeral git, isolated git environment, mirror repo, promote branch, disposable git server.
+description: Use when managing ephemeral Gitea Docker environments, mirroring GitHub repos for isolated work, or promoting changes back to GitHub as PRs. Triggers on gitea, ephemeral git, isolated git environment, git sandbox for experiments/testing/demos, mirror repo, promote branch, disposable git server with issues/PRs/API access.
 user-invocable: true
 ---
 
