@@ -139,6 +139,16 @@ def token(id: str) -> None:
     "--include-releases", is_flag=True, default=False, help="Include releases."
 )
 @click.option("--include-wiki", is_flag=True, default=False, help="Include wiki.")
+@click.option(
+    "--skip-existing",
+    is_flag=True,
+    default=False,
+    help=(
+        "If the target repository already exists in Gitea, return its current "
+        "metadata as a successful result (with `skipped: true` and `migrated.*: false`) "
+        "instead of failing. Useful for idempotent orchestration."
+    ),
+)
 def mirror_from_github(
     id: str,
     github_repo: str,
@@ -149,11 +159,15 @@ def mirror_from_github(
     include_milestones: bool,
     include_releases: bool,
     include_wiki: bool,
+    skip_existing: bool,
 ) -> None:
     """Mirror a GitHub repo into a Gitea environment.
 
     By default mirrors the full commit history and all branches.
     Use --include-* flags to opt in to metadata (issues, PRs, etc.).
+    Pass --skip-existing to make the operation idempotent against
+    repos already present in Gitea (e.g. from persistent volumes
+    surviving previous environments).
     """
     result = github_sync.mirror(
         id,
@@ -165,6 +179,7 @@ def mirror_from_github(
         include_milestones,
         include_releases,
         include_wiki,
+        skip_existing=skip_existing,
     )
     click.echo(json.dumps(result, indent=2))
 

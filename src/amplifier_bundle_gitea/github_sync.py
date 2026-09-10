@@ -7,6 +7,7 @@ from __future__ import annotations
 import click
 
 from amplifier_bundle_gitea import docker_ops, gitea_api, github_api
+from amplifier_bundle_gitea.constants import ADMIN_USER
 
 
 def mirror(
@@ -19,11 +20,22 @@ def mirror(
     include_milestones: bool,
     include_releases: bool,
     include_wiki: bool,
+    *,
+    skip_existing: bool = False,
 ) -> dict:
     """Mirror a GitHub repo into a Gitea environment.
 
     Returns a result dict describing the migration outcome.
     Raises click.ClickException on errors.
+
+    When ``skip_existing=True``, a 409 "repository already exists" response
+    from Gitea is treated as success: the existing repo's metadata is
+    fetched via ``gitea_api.get_repo`` and returned in the same shape, with
+    ``skipped: True`` set on the result and every entry under ``migrated``
+    set to ``False`` (because nothing was migrated this call). This makes
+    the operation idempotent for orchestration use cases (eval harnesses,
+    setup scripts) where re-running should not fail when state already
+    matches the desired outcome.
     """
     client = docker_ops.get_docker_client()
     container = docker_ops.find_container(client, env_id)
@@ -35,26 +47,50 @@ def mirror(
     gitea_token = gitea_api.generate_token(gitea_url)
     repo_name = github_repo.rstrip("/").split("/")[-1]
 
-    repo_info = gitea_api.migrate_repo(
-        gitea_url,
-        gitea_token,
-        clone_addr=github_repo,
-        repo_name=repo_name,
-        github_token=github_token,
-        mirror=False,
-        issues=include_issues,
-        pull_requests=include_prs,
-        labels=include_labels,
-        milestones=include_milestones,
-        releases=include_releases,
-        wiki=include_wiki,
-    )
+    try:
+        repo_info = gitea_api.migrate_repo(
+            gitea_url,
+            gitea_token,
+            clone_addr=github_repo,
+            repo_name=repo_name,
+            github_token=github_token,
+            mirror=False,
+            issues=include_issues,
+            pull_requests=include_prs,
+            labels=include_labels,
+            milestones=include_milestones,
+            releases=include_releases,
+            wiki=include_wiki,
+        )
+    except gitea_api.RepoExistsError:
+        if not skip_existing:
+            raise
+        # Repo already exists -- fetch its metadata so we can return the same
+        # shape as the migrate path.
+        existing = gitea_api.get_repo(gitea_url, gitea_token, ADMIN_USER, repo_name)
+        return {
+            "id": env_id,
+            "gitea_repo": f"{existing['owner']['login']}/{existing['name']}",
+            "gitea_clone_url": existing.get("clone_url", ""),
+            "source": github_repo,
+            "skipped": True,
+            "migrated": {
+                "git": False,
+                "issues": False,
+                "pull_requests": False,
+                "labels": False,
+                "milestones": False,
+                "releases": False,
+                "wiki": False,
+            },
+        }
 
     return {
         "id": env_id,
         "gitea_repo": f"{repo_info['owner']['login']}/{repo_info['name']}",
         "gitea_clone_url": repo_info.get("clone_url", ""),
         "source": github_repo,
+        "skipped": False,
         "migrated": {
             "git": True,
             "issues": include_issues,
