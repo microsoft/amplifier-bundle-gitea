@@ -19,6 +19,7 @@ amplifier-gitea create \
   --port 10110 \
   [--name my-env] \
   [--image docker.gitea.com/gitea:latest] \
+  [--bind-address 127.0.0.1] \
   [--network my-network] \
   [--network-alias gitea] \
   [--add-host host.docker.internal:host-gateway] \
@@ -33,6 +34,10 @@ amplifier-gitea create \
 
 `--image` (optional)
   Container image. Defaults to `docker.gitea.com/gitea:latest`.
+
+`--bind-address` (optional)
+  Host address on which Docker publishes the Gitea port. Defaults to
+  `127.0.0.1`. Use `0.0.0.0` only when remote access is explicitly required.
 
 `--network` (optional)
   Docker network to join.
@@ -57,7 +62,7 @@ Returns:
   "gitea_url": "http://localhost:10110",
   "token": "sha1_abc123...",
   "admin_user": "admin",
-  "admin_password": "admin1234",
+  "admin_password": "<unique random password>",
   "status": "running"
 }
 ```
@@ -72,12 +77,13 @@ Steps performed:
    - `amplifier-gitea.created-at=<ISO8601>`
 3. Wait for Gitea to pass health check (`GET /api/healthz`).
 4. Create admin user via `gitea admin user create` inside the container.
-5. Generate API token via `POST /api/v1/users/admin/tokens` with basic auth (same mechanism as the `token` command).
-6. Return connection details including the token.
+5. Generate an API token via `POST /api/v1/users/admin/tokens` with the
+   per-environment admin credential (the same mechanism as the `token` command).
+6. Return connection details including the random admin password and token.
 
-Note: The token value is only available at creation time. Gitea does not
-store tokens in plain text. Use the `token` command to generate a new one
-if needed.
+Note: The password and token values are only returned at creation time.
+Gitea does not store tokens in plain text. Use the `token` command to generate
+a new one if needed.
 
 
 ### `destroy`
@@ -180,7 +186,7 @@ Returns:
 ```
 
 Uses `POST /api/v1/users/admin/tokens` with basic auth against the
-hardcoded admin credentials.
+environment's unique admin credential stored in its Docker metadata.
 
 
 ## Git Platform Operations

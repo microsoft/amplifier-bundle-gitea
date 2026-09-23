@@ -40,6 +40,13 @@ def test_create_requires_port():
     assert result.returncode != 0
 
 
+def test_create_help_documents_secure_bind_default():
+    result = run_cli("create", "--help")
+    assert result.returncode == 0
+    assert "--bind-address" in result.stdout
+    assert "127.0.0.1" in result.stdout
+
+
 def test_destroy_requires_id():
     result = run_cli("destroy")
     assert result.returncode != 0

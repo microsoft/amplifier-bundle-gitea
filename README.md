@@ -56,9 +56,10 @@ For development setup, see [docs/development.md](docs/development.md).
 
 ## Quick Start
 
-`create` pulls a Gitea Docker image and starts a container configured with SQLite, offline mode, and sensible defaults — no external database required. 
-A hardcoded admin account (`admin`/`admin1234`) is created automatically, and an API token is generated and returned in the output. 
-The token is only available in plaintext at creation time. Docker must be running on the host.
+`create` pulls a Gitea Docker image and starts a container configured with SQLite, offline mode, and sensible defaults — no external database required.
+An `admin` account with a unique random password is created automatically, and both the password and an API token are returned in the output.
+The service binds to `127.0.0.1` by default. Use `--bind-address` only when another host must reach the disposable server.
+The credentials are returned in plaintext only at creation time; the admin password is retained in Docker metadata so later CLI commands can mint replacement API tokens. Docker must be running on the host.
 Please submit feedback if you would like more configuration options made available.
 
 ```bash
@@ -96,7 +97,7 @@ curl -X POST "$GITEA_URL/api/v1/repos/admin/my-repo/issues" \
   -H "Content-Type: application/json" \
   -d '{"title": "Bug: login broken", "body": "Redirect fails after login."}'
 
-# View Gitea at http://localhost:10110 (admin/admin1234) and see the repo, commit, and issue you just created!
+# View Gitea at http://localhost:10110 using the returned admin credentials.
 ```
 
 ### GitHub Sync

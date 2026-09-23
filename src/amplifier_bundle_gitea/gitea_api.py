@@ -8,7 +8,7 @@ import uuid
 import click
 import httpx
 
-from amplifier_bundle_gitea.constants import ADMIN_PASSWORD, ADMIN_USER
+from amplifier_bundle_gitea.constants import ADMIN_USER
 
 
 def wait_until_healthy(url: str, timeout: int = 60) -> None:
@@ -43,7 +43,9 @@ def check_healthy(url: str) -> bool:
         return False
 
 
-def generate_token(url: str, token_name: str | None = None) -> str:
+def generate_token(
+    url: str, admin_password: str, token_name: str | None = None
+) -> str:
     """Create a new API token via Gitea's REST API.
 
     Uses basic auth with the admin credentials.
@@ -54,7 +56,7 @@ def generate_token(url: str, token_name: str | None = None) -> str:
         token_name = f"amplifier-{uuid.uuid4().hex[:8]}"
     resp = httpx.post(
         f"{url}/api/v1/users/{ADMIN_USER}/tokens",
-        auth=(ADMIN_USER, ADMIN_PASSWORD),
+        auth=(ADMIN_USER, admin_password),
         json={"name": token_name, "scopes": ["all"]},
         timeout=10,
     )
