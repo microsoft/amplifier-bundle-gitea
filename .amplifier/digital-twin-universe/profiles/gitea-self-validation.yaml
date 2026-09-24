@@ -19,7 +19,8 @@
 #     --var GITEA_URL=http://localhost:10110 \
 #     --var GITEA_TOKEN=<token from create>
 #
-#   # After launch, inner Gitea is at http://localhost:10120 (admin/admin1234)
+#   # After launch, inner Gitea is at http://localhost:10120.
+#   # Read the create output for its random admin password.
 #
 # Variables (provided at launch via --var):
 #   GITEA_URL   -- Gitea base URL (e.g. http://localhost:10110)

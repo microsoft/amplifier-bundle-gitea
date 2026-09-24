@@ -2,6 +2,7 @@
 
 """Create operation for amplifier-gitea."""
 
+import secrets
 import uuid
 from datetime import datetime, timezone
 
@@ -10,11 +11,12 @@ import docker.errors
 
 from amplifier_bundle_gitea import docker_ops, gitea_api
 from amplifier_bundle_gitea.constants import (
-    ADMIN_PASSWORD,
     ADMIN_USER,
     CONTAINER_NAME_PREFIX,
+    DEFAULT_BIND_ADDRESS,
     GITEA_ENV_VARS,
     GITEA_INTERNAL_PORT,
+    LABEL_ADMIN_PASSWORD,
     LABEL_CREATED_AT,
     LABEL_ID,
     LABEL_MANAGED_BY,
@@ -32,6 +34,7 @@ def create_environment(
     network_alias: str | None,
     add_host: tuple[str, ...],
     hostname: str | None,
+    bind_address: str = DEFAULT_BIND_ADDRESS,
     volumes: dict | None = None,
     health_check_host: str = "localhost",
 ) -> dict:
@@ -52,6 +55,8 @@ def create_environment(
         network_alias: Optional alias on the Docker network (requires network).
         add_host: Extra host entries to inject into the container (--add-host).
         hostname: Optional hostname for the container.
+        bind_address: Host address on which Docker publishes the Gitea port.
+            Defaults to loopback so environments are not reachable by peers.
         volumes: Optional volume mounts dict passed to docker-py.
         health_check_host: Hostname or IP used to poll Gitea's health endpoint.
             Defaults to ``"localhost"``, which is correct when the caller runs on
@@ -71,6 +76,8 @@ def create_environment(
     if network_alias and not network:
         raise click.ClickException("--network-alias requires --network")
 
+    admin_password = secrets.token_urlsafe(24)
+
     # 3. Get Docker client
     client = docker_ops.get_docker_client()
 
@@ -88,6 +95,7 @@ def create_environment(
         LABEL_NAME: name,
         LABEL_PORT: str(port),
         LABEL_CREATED_AT: datetime.now(timezone.utc).isoformat(),
+        LABEL_ADMIN_PASSWORD: admin_password,
     }
     environment = {
         **GITEA_ENV_VARS,
@@ -98,7 +106,7 @@ def create_environment(
         "image": image,
         "detach": True,
         "name": container_name,
-        "ports": {f"{GITEA_INTERNAL_PORT}/tcp": port},
+        "ports": {f"{GITEA_INTERNAL_PORT}/tcp": (bind_address, port)},
         "labels": labels,
         "environment": environment,
     }
@@ -136,7 +144,7 @@ def create_environment(
                 "--username",
                 ADMIN_USER,
                 "--password",
-                ADMIN_PASSWORD,
+                admin_password,
                 "--email",
                 "admin@localhost",
                 "--must-change-password=false",
@@ -146,7 +154,7 @@ def create_environment(
         # Exit code 0 = created, non-zero = may already exist (OK)
 
         # 8. Generate token
-        token = gitea_api.generate_token(gitea_url)
+        token = gitea_api.generate_token(gitea_url, admin_password)
 
         # 9. Return result
         return {
@@ -157,7 +165,7 @@ def create_environment(
             "gitea_url": gitea_url,
             "token": token,
             "admin_user": ADMIN_USER,
-            "admin_password": ADMIN_PASSWORD,
+            "admin_password": admin_password,
             "status": "running",
         }
     except Exception:

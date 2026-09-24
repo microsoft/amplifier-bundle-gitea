@@ -58,7 +58,8 @@ def test_create_returns_valid_json(gitea_env):
     )
     assert gitea_env["status"] == "running"
     assert gitea_env["admin_user"] == "admin"
-    assert gitea_env["admin_password"] == "admin1234"
+    assert len(gitea_env["admin_password"]) >= 32
+    assert gitea_env["admin_password"] != "admin1234"
     assert isinstance(gitea_env["port"], int)
     assert gitea_env["gitea_url"].startswith("http://")
     assert gitea_env["container_name"].startswith("amplifier-gitea-")

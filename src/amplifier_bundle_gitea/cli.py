@@ -7,7 +7,7 @@ import json
 import click
 
 from amplifier_bundle_gitea import docker_ops, gitea_api, github_sync
-from amplifier_bundle_gitea.constants import ADMIN_USER
+from amplifier_bundle_gitea.constants import ADMIN_USER, DEFAULT_BIND_ADDRESS
 from amplifier_bundle_gitea.create import create_environment
 
 
@@ -47,6 +47,12 @@ def main() -> None:
     help="Add /etc/hosts entry. Format: host:ip. Repeatable.",
 )
 @click.option("--hostname", default=None, help="Set the container's hostname.")
+@click.option(
+    "--bind-address",
+    default=DEFAULT_BIND_ADDRESS,
+    show_default=True,
+    help="Host address on which to publish Gitea. Use 0.0.0.0 only when required.",
+)
 def create(
     port: int,
     name: str | None,
@@ -55,6 +61,7 @@ def create(
     network_alias: str | None,
     add_host: tuple[str, ...],
     hostname: str | None,
+    bind_address: str,
 ) -> None:
     """Create a new Gitea environment."""
     result = create_environment(
@@ -65,6 +72,7 @@ def create(
         network_alias=network_alias,
         add_host=add_host,
         hostname=hostname,
+        bind_address=bind_address,
     )
     click.echo(json.dumps(result, indent=2))
 
@@ -108,7 +116,8 @@ def token(id: str) -> None:
     container = docker_ops.find_container(client, id)
     info = docker_ops.get_container_info(container)
     gitea_url = f"http://localhost:{info['port']}"
-    token_value = gitea_api.generate_token(gitea_url)
+    admin_password = docker_ops.get_admin_password(container)
+    token_value = gitea_api.generate_token(gitea_url, admin_password)
     result = {
         "id": id,
         "token": token_value,

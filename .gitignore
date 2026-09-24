@@ -38,3 +38,6 @@ logs/
 
 # uv
 uv.lock
+
+# Agent work-lane notes and evidence
+docs/lanes/

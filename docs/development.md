@@ -73,6 +73,6 @@ modify the default branch, create/delete repos, force push, or touch tags.
 - **Consumer-initiated GitHub sync.** `mirror-from-github` and `promote-to-github` are explicit operations the consumer calls, not automatic background sync. The consumer controls when repos flow in and when results flow out.
 - **Docker labels as source of truth.** Environments are discovered by querying Docker for labeled containers, not local filesystem state. No metadata to get out of sync.
 - **Consumer controls networking.** The tool makes no networking assumptions. Consumers pass `--network`, `--network-alias`, `--add-host`, etc. as needed for their topology.
-- **Opinionated Gitea defaults.** SQLite, offline mode, hardcoded admin account, disabled actions/packages/indexer. Optimized for ephemeral local use. Extractable into config later.
+- **Opinionated Gitea defaults.** SQLite, offline mode, a per-environment random admin credential, loopback-only port binding, and disabled actions/packages/indexer. Optimized for ephemeral local use. Extractable into config later.
 - **CLI-first, JSON output.** All commands return JSON to stdout for programmatic consumption.
 - **Runs locally.** The CLI runs on the user's machine, not as a separate service. It talks to Docker for container lifecycle, to the Gitea API for repo operations, and to the GitHub API for PR creation. All over HTTP.

@@ -8,6 +8,7 @@ import docker.errors
 from docker.models.containers import Container
 
 from amplifier_bundle_gitea.constants import (
+    LABEL_ADMIN_PASSWORD,
     LABEL_CREATED_AT,
     LABEL_ID,
     LABEL_MANAGED_BY,
@@ -62,6 +63,17 @@ def get_container_info(container: Container) -> dict:
         "created_at": labels.get(LABEL_CREATED_AT, ""),
         "container_running": container.status == "running",
     }
+
+
+def get_admin_password(container: Container) -> str:
+    """Return the per-environment admin password stored in Docker metadata."""
+    password = container.labels.get(LABEL_ADMIN_PASSWORD, "")
+    if not password:
+        raise click.ClickException(
+            "Environment was created without a stored admin credential. "
+            "Destroy and recreate it with the current amplifier-gitea version."
+        )
+    return password
 
 
 def remove_container(client: docker.DockerClient, env_id: str) -> None:

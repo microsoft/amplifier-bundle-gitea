@@ -56,7 +56,7 @@ read_file("@gitea:docs/development.md")
 
 ### Admin Credentials
 
-Every environment by default is created with a hardcoded admin account: `admin` / `admin1234`. The Gitea web UI is accessible at `http://localhost:<port>` and the Swagger API docs at `http://localhost:<port>/swagger`.
+Every environment is created with an `admin` account and a unique random password returned by `create`. The service binds to `127.0.0.1` by default; pass `--bind-address 0.0.0.0` only when remote access is required. The Gitea web UI is accessible at `http://localhost:<port>` and the Swagger API docs at `http://localhost:<port>/swagger`.
 
 ### Mirroring Performance
 

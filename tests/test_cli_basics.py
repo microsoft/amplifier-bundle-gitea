@@ -25,7 +25,7 @@ COMMANDS = [
 def test_version():
     result = run_cli("--version")
     assert result.returncode == 0
-    assert "0.1.0" in result.stdout
+    assert "0.2.0" in result.stdout
 
 
 def test_help_lists_all_commands():
@@ -38,6 +38,13 @@ def test_help_lists_all_commands():
 def test_create_requires_port():
     result = run_cli("create")
     assert result.returncode != 0
+
+
+def test_create_help_documents_secure_bind_default():
+    result = run_cli("create", "--help")
+    assert result.returncode == 0
+    assert "--bind-address" in result.stdout
+    assert "127.0.0.1" in result.stdout
 
 
 def test_destroy_requires_id():

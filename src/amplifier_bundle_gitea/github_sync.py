@@ -32,7 +32,8 @@ def mirror(
         raise click.ClickException(f"Environment '{env_id}' is not running")
     gitea_url = f"http://localhost:{info['port']}"
 
-    gitea_token = gitea_api.generate_token(gitea_url)
+    admin_password = docker_ops.get_admin_password(container)
+    gitea_token = gitea_api.generate_token(gitea_url, admin_password)
     repo_name = github_repo.rstrip("/").split("/")[-1]
 
     repo_info = gitea_api.migrate_repo(
@@ -96,7 +97,8 @@ def promote(
         raise click.ClickException(f"Environment '{env_id}' is not running")
     gitea_url = f"http://localhost:{info['port']}"
 
-    gitea_token = gitea_api.generate_token(gitea_url)
+    admin_password = docker_ops.get_admin_password(container)
+    gitea_token = gitea_api.generate_token(gitea_url, admin_password)
 
     if "/" not in repo:
         raise click.ClickException(

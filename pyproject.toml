@@ -1,6 +1,6 @@
 [project]
 name = "amplifier-bundle-gitea"
-version = "0.1.0"
+version = "0.2.0"
 description = "On-demand ephemeral Gitea instances for isolated git workflows"
 readme = "README.md"
 requires-python = ">=3.11"
