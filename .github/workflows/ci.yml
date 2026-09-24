@@ -44,10 +44,7 @@ jobs:
   # than left to look like an oversight: ruff 0.16 SHIPS A WIDER DEFAULT SELECT
   # than the classic tier. A bare `uvx ruff@0.16.6 check .` on clean main
   # @9d54093 reports 21 findings (I001 x5, PLW1510 x4, S110 x3, BLE001 x3,
-  # EXE001 x2, UP017, RUF015) -- and 3 of them are in
-  # docs/lanes/mse0-*/evidence/, which is a FROZEN EVIDENCE ARTIFACT of a
-  # completed measurement lane and must not be rewritten to please a linter.
-  # Naming the tier here keeps this workflow honest about exactly what it
+  # EXE001 x2, UP017, RUF015). Naming the tier here keeps this workflow honest about exactly what it
   # gates, and leaves that cleanup as a visible follow-up with a one-line
   # reproduce command:
   #
